@@ -6,23 +6,39 @@ import { renderToDom } from "../utils/renderToDom.js";
 // Reusable function to get the cards on the DOM
 // .forEach()
 const renderCards = (array) => {
-  let refStuff = "<h1 class='text-white'>Cards Go Here!</h1>";
-  renderToDom("#cards", refStuff);
+  let refStuff = "";
+  
+  array.forEach((item)=>{
+    refStuff += card(item);
+  });
+  renderToDom("#cards", refStuff)
 }
 
 // UPDATE/ADD ITEMS TO CART
 // .findIndex() & (.includes() - string method)
 const toggleCart = (event) => {
   if (event.target.id.includes("fav-btn")) {
-   console.log('Clicked Fav btn')
+  //  console.log('Clicked Fav btn')
+    const [, id] = event.target.id.split("--");
+
+    const index= referenceList.findIndex(taco => taco.id === Number(id))
+    referenceList[index].inCart = !referenceList[index].inCart
+    cartTotal();
+    renderCards(referenceList);
   }
 }
 
 // SEARCH
 // .filter()
 const search = (event) => {
-  const eventLC = event.target.value.toLowerCase();
-  console.log(eventLC)
+  const userInput = event.target.value.toLowerCase();
+  console.log(userInput)
+  const searchResult = referenceList.filter(taco => 
+    taco.title.toLowerCase().includes(userInput) ||
+    taco.author.toLowerCase().includes(userInput) ||
+    taco.description.toLowerCase().includes(userInput) 
+  )
+  renderCards(searchResult);
 }
 
 // BUTTON FILTER
@@ -30,14 +46,23 @@ const search = (event) => {
 const buttonFilter = (event) => {
   if(event.target.id.includes('free')) {
     console.log('FREE')
+    // this needs to be set to a variable so that you can call in when you render it to dom. we are then setting it to refrenceList which is the name of the main array. then filter it based on the item when the item's price is less than or equal to 0 which makes it free. Lastly you need to use renderCards(the name of your new filtered array)
+    const freeArray = referenceList.filter(item => item.price <= 0);
+    renderCards(freeArray)
   }
   if(event.target.id.includes('cartFilter')) {
-    console.log('cartFilter')
+    const wishlistArray = referenceList.filter(item => item.inCart);
+    renderCards(wishlistArray);
+    console.log(wishlist)
   }
   if(event.target.id.includes('books')) {
+    const booksArray = referenceList.filter(item => item.type.toLocaleLowerCase === "book");
+    renderCards(booksArray)
     console.log('books!')
   }
   if(event.target.id.includes('clearFilter')) {
+    // const clearFilterArray = referenceList.filter(item => item.)
+    renderCards(referenceList)
     console.log('clearFilter')
   }
   if(event.target.id.includes('productList')) {
@@ -52,7 +77,7 @@ const buttonFilter = (event) => {
     <tbody>
     `;
     
-    productList().forEach(item => {
+    productList().sort((a,b)=> a.type.localeCompare(b.type)).forEach(item => {
       table += tableRow(item);
     });
 
@@ -66,14 +91,27 @@ const buttonFilter = (event) => {
 // CALCULATE CART TOTAL
 // .reduce() & .some()
 const cartTotal = () => {
-  const total = 0
+  const cart = referenceList.filter(taco => taco.inCart);
+  const total = cart.reduce((value1,value2) => value1+value2.price ,0);
+  const free = cart.some(taco => taco.price <= 0 );
   document.querySelector("#cartTotal").innerHTML = total.toFixed(2);
+
+  if (free){
+    document.querySelector("#includes-free").innerHTML = 'INCLUDES FREE ITEMS'
+  } else {
+    document.querySelector("#includes-free").innerHTML =''
+    }
+  
 }
 
 // RESHAPE DATA TO RENDER TO DOM
 // .map()
 const productList = () => {
-  return [{ title: "SAMPLE TITLE", price: 45.00, type: "SAMPLE TYPE" }]
+  return referenceList.map(item => ({
+    title: item.title, 
+    price: item.price,
+    type: item.type
+  }))
 }
 
 
